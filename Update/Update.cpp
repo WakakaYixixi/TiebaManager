@@ -28,7 +28,7 @@ using tinyxml2::XMLElement;
 
 
 // 当前版本，每次更新后修改，也可以不是日期
-UPDATE_API const CString UPDATE_CURRENT_VERSION = _T("16-05-29");
+UPDATE_API const CString UPDATE_CURRENT_VERSION = _T("16-09-18");
 
 static const CString MANUALLY_UPDATE_URL = _T("http://sinacloud.net/xfgryujk/TiebaManager/贴吧管理器.zip");
 UPDATE_API const CString UPDATE_INFO_URL = _T("http://sinacloud.net/xfgryujk/TiebaManager/UpdateInfo.xml");
@@ -86,10 +86,6 @@ UPDATE_API DECLEAR_WRITE(CUpdateInfo::FileInfo)
 	*md5 = m_value.md5;
 	md5.Write(*optionNode);
 }
-
-UPDATE_API DEFINE_READ_VECTOR(CUpdateInfo::FileInfo)
-
-UPDATE_API DEFINE_WRITE_VECTOR(CUpdateInfo::FileInfo)
 
 CUpdateInfo::CUpdateInfo() : CConfigBase("UpdateInfo"),
 	m_version("Version", _T("")),
@@ -174,9 +170,9 @@ pause
 static BOOL DownloadFiles(const vector<CUpdateInfo::FileInfo>& files, const CString& relativeDir, 
 	const CString& updateDir, vector<CUpdateInfo::FileInfo>& updateFiles)
 {
-	CFile f;
 	for (const auto& fileInfo : files)
 	{
+		CFile f;
 		// 不需要更新此文件
 		if (f.Open(relativeDir + fileInfo.dir + fileInfo.name, CFile::modeRead)
 			&& GetMD5_File(f) == fileInfo.md5)
@@ -208,7 +204,6 @@ static BOOL DownloadFiles(const vector<CUpdateInfo::FileInfo>& files, const CStr
 			return FALSE;
 		}
 		f.Write(buffer.get(), size);
-		f.Close();
 	}
 	return TRUE;
 }

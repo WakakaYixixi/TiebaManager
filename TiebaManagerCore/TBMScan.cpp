@@ -45,14 +45,17 @@ CTBMScan::CTBMScan(CTBMCoreConfig* config, CUserCache* userCache, CTBMOperate* o
 
 CTBMScan::~CTBMScan()
 {
-	m_stopScanFlag = TRUE;
-	if (IsScanning())
+	StopScan();
+	if (m_scanThread != nullptr && m_scanThread->joinable())
 		m_scanThread->join();
 }
 
 // 开始扫描
 void CTBMScan::StartScan(const CString& sPage)
 {
+	StopScan();
+	if (m_scanThread != nullptr && m_scanThread->joinable())
+		m_scanThread->join();
 	m_scanThread.reset(new thread(&CTBMScan::ScanThread, this, sPage));
 }
 
@@ -65,7 +68,7 @@ void CTBMScan::StopScan()
 // 正在扫描
 BOOL CTBMScan::IsScanning()
 {
-	return m_scanThread != nullptr && m_scanThread->joinable();
+	return m_scanThread != nullptr && IsThreadRunning(*m_scanThread);
 }
 
 // 扫描主题图片
@@ -212,7 +215,6 @@ void CTBMScan::ScanThread(CString sPage)
 ScanThreadEnd:
 	m_eventBus.Post(ScanThreadEndEvent);
 
-	m_scanThread->detach();
 	TRACE(_T("总扫描线程结束\n"));
 }
 
@@ -265,6 +267,16 @@ void CTBMScan::ScanPostThread(int threadID)
 					m_log->Log(_T("<a href=\"http://tieba.baidu.com/p/") + thread.tid + _T("\">") + thread.title
 					+ _T("</a> <font color=red>获取贴子列表失败(超时)，暂时跳过</font>"));
 				goto Next;
+			}
+
+			// 判断贴吧ID，避免百度乱插其他吧的帖子
+			{
+				CString tmp = GetStringBetween(src, _T("PageData.forum"), _T("}"));
+				tmp.Replace(_T("\r\n"), _T(""));
+				std::wcmatch res;
+				if (std::regex_search((LPCTSTR)tmp, res, FORUM_ID_NAME_REG)
+					&& res[3].str().c_str() != m_operate->m_tiebaOperate->GetForumID())
+					goto Next;
 			}
 
 			// 获取帖子页数

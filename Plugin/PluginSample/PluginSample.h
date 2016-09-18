@@ -18,16 +18,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #pragma once
-#include "HelperCommon.h"
+class CEventBase;
 
 
-// 不阻塞消息的延迟
-HELPER_API void Delay(DWORD time);
-// 处理消息
-HELPER_API void DoEvents();
-// 创建目录
-HELPER_API BOOL CreateDir(const CString& path);
-// 初始化COM库
-HELPER_API BOOL CoInitializeHelper();
-// 判断线程是否在运行
-HELPER_API BOOL IsThreadRunning(thread& thread_);
+class CPluginSample
+{
+protected:
+	int m_onPostSetTiebaID = -1;
+
+public:
+	bool Init();
+	bool Uninit();
+	void OnConfig();
+
+	void OnPostSetTieba(CEventBase* event__);
+};
+extern CPluginSample g_pluginSample;
